@@ -8,7 +8,7 @@ public class PageRankTest
     @Test
     public void test()
     {
-        PageRank.main(null);
+        Driver.main(null);
     }
 
 }
