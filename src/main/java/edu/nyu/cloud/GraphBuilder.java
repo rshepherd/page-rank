@@ -16,7 +16,8 @@ import org.apache.hadoop.util.GenericOptionsParser;
 
 public class GraphBuilder
 {
-    private static final String NEW_LINE = System.getProperty("line.separator");
+    private static final char SEP = '\f';
+    
     private static final Pattern TITLE = Pattern.compile("<title>(.*?)</title>", Pattern.DOTALL);
     private static final Pattern LINK = Pattern.compile("\\[\\[(.*?)\\]\\]", Pattern.DOTALL);
 
@@ -35,18 +36,17 @@ public class GraphBuilder
                 return;
             }
 
-            StringBuffer links = new StringBuffer("1" + NEW_LINE);
+            StringBuffer links = new StringBuffer("1").append(SEP);
             matcher = LINK.matcher(text.toString());
             while (matcher.find())
             {
-                String link = matcher.group();
+                String link = matcher.group().replaceAll("[\\[\\]]", "");
                 int pipe = link.indexOf("|");
                 if (pipe > -1)
                 {
                     link = link.substring(0, pipe);
                 }
-                link = link.replaceAll("[\\[\\]]", "");
-                links.append(link).append(NEW_LINE);
+                links.append(link).append(SEP);
             }
 
             context.write(new Text(title), new Text(links.toString()));
@@ -56,8 +56,7 @@ public class GraphBuilder
     public static class GraphReducer extends Reducer<Text, Text, Text, Text>
     {
 
-        public void reduce(Text key, Text value, Context context)
-                throws IOException, InterruptedException
+        public void reduce(Text key, Text value, Context context) throws IOException, InterruptedException
         {
             context.write(key, value);
         }
@@ -65,9 +64,10 @@ public class GraphBuilder
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException
     {
+        print("args", args);
         Configuration conf = new Configuration();
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
-        if (otherArgs.length != 2) {
+        if (otherArgs.length != 3) {
           System.err.println("Usage: graph <in> <out>");
           System.exit(2);
         }
@@ -77,9 +77,17 @@ public class GraphBuilder
         job.setReducerClass(GraphReducer.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
-        FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
-        FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
+        FileInputFormat.addInputPath(job, new Path(otherArgs[1]));
+        FileOutputFormat.setOutputPath(job, new Path(otherArgs[2]));
         System.exit(job.waitForCompletion(true) ? 0 : 1);
+    }
+    
+    private static void print(String name, String[] args) 
+    {
+        System.out.println(name);
+        for(String s : args)
+            System.out.print(s+" ");
+        System.out.println();
     }
     
 }
