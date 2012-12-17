@@ -22,7 +22,7 @@ public class Sorter
         public void map(LongWritable key, Text value, Context context)
                 throws IOException, InterruptedException
         {
-            StringTokenizer st = new StringTokenizer(value.toString());
+            StringTokenizer st = new StringTokenizer(value.toString(), PageRank.DELIMITER+"");
             String url = st.nextToken();
             double rank = Double.parseDouble(st.nextToken());
             context.write(new DoubleWritable(rank), new Text(url));
@@ -43,7 +43,7 @@ public class Sorter
         Job job = new Job(conf, "sort");
         job.setJarByClass(Sorter.class);
         job.setMapperClass(SorterMapper.class);
-        job.setOutputKeyClass(Text.class);
+        job.setOutputKeyClass(DoubleWritable.class);
         job.setOutputValueClass(Text.class);
         FileInputFormat.addInputPath(job, new Path(otherArgs[1]));
         FileOutputFormat.setOutputPath(job, new Path(otherArgs[2]));

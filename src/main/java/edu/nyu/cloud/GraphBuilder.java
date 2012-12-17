@@ -34,7 +34,7 @@ public class GraphBuilder
             Matcher matcher = TITLE_PATTERN.matcher(pageBody);
             if (matcher.find())
             {
-                pageTitle = matcher.group().replaceAll("</?title>", "");
+                pageTitle = matcher.group().replaceAll("</?title>", "").trim();
             } 
             else
             {
@@ -42,7 +42,7 @@ public class GraphBuilder
                 return;
             }
 
-            StringBuilder outgoingLinks = new StringBuilder(INIT_PAGE_RANK);
+            StringBuilder outboundLinks = new StringBuilder(INIT_PAGE_RANK);
             matcher = LINK_PATTERN.matcher(pageBody);
             while (matcher.find())
             {
@@ -52,10 +52,10 @@ public class GraphBuilder
                 {
                     link = link.substring(0, pipe);
                 }
-                outgoingLinks.append(PageRank.DELIMITER).append(link);
+                outboundLinks.append(PageRank.DELIMITER).append(link);
             }
 
-            context.write(new Text(pageTitle), new Text(outgoingLinks.toString()));
+            context.write(new Text(pageTitle), new Text(outboundLinks.toString()));
         }
     }
 
