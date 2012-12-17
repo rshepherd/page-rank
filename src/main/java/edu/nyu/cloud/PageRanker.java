@@ -2,12 +2,14 @@ package edu.nyu.cloud;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.StringTokenizer;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.OutputCollector;
-import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -17,60 +19,70 @@ import org.apache.hadoop.util.GenericOptionsParser;
 
 public class PageRanker
 {
-
-    public static class PageRankMapper extends Mapper<Text, Text, Text, Text>
+    private static final Log LOG = LogFactory.getLog(PageRanker.class);
+    
+    // Input record format: inlink \t pagerank \t outlink1 \t outlink2 \t ...
+    // Emit key-value pairs: key=url value=rank -or- key=url value=outlinks
+    public static class PageRankMapper extends Mapper<LongWritable, Text, Text, Text>
     {
-        // Input key=url value=[rank, outlinks]
-        public void map(Text key, Text val, Context context)
-                throws IOException, InterruptedException
+        public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException
         {
-            String value = val.toString();
-            String[] rankAndLinks = value.split(Driver.SEP + "");
-            Integer numOutLinks = rankAndLinks.length - 1;
-            Float rank = Float.valueOf(rankAndLinks[0]) / numOutLinks;
-            for (int i = 1; i < numOutLinks; ++i)
+            String line = value.toString();
+            
+            // Emit each outlink and its rank
+            StringTokenizer st = new StringTokenizer(line, PageRank.DELIMITER+"");
+            Text inlink = new Text(st.nextToken());
+            Text outlinkRank = rank(st.nextToken(), st.countTokens());
+            while (st.hasMoreTokens())
             {
-                // Emit key=outlink value=rank
-                context.write(new Text(rankAndLinks[i]), new Text(rank.toString()));
+                Text outlink = new Text(st.nextToken()); 
+                context.write(outlink, outlinkRank);
             }
+            
+            // Emit the inlink and all of its outlinks
+            int outlinksIndex = PageRank.nthIndexOf(line, PageRank.DELIMITER, 2) + 1;
+            context.write(inlink, new Text(line.substring(outlinksIndex)));
+        }
 
-            // Emit key=url value=outlinks
-            context.write(key, new Text(value.substring(value.indexOf(Driver.SEP) + 1)));
+        private Text rank(String parentPageRank, int numOutlinks)
+        {
+            Double rank = Double.valueOf(parentPageRank) / numOutlinks;
+            return new Text( rank.toString() );
         }
     }
 
+    // Emit: key=url value=pagerank \t outlink1 \t outlink2 \t ...
     public static class PageRankReducer extends Reducer<Text, Text, Text, Text>
     {
-        // Input key=outlink value=rank -or- key=url value=outlinks
-        public void reduce(Text key, Iterator<Text> values, OutputCollector<Text, Text> context, Reporter reporter)
+
+        public void reduce(Text key, Iterator<Text> values, Context context)
                 throws IOException, InterruptedException
         {
-            float rank = 0.0f;
+            double rank = 0.0f;
             StringBuilder outlinks = new StringBuilder();
 
             while (values.hasNext())
             {
                 String v = values.next().toString();
-                if (Driver.isNumeric(v))
+                if (PageRank.isNumeric(v))
                 {
-                    rank += Float.valueOf(v);
+                    rank += Double.valueOf(v);
                 } else
                 {
-                    outlinks.append(v).append(Driver.SEP);
+                    outlinks.append(PageRank.DELIMITER).append(v);
                 }
             }
 
-            // Emit key=url value=[rank, outlinks]
-            context.collect(key, new Text(String.valueOf(rank) + outlinks.toString()));
+            context.write(key, new Text(String.valueOf(rank) + outlinks.toString()));
         }
     }
 
     public static void main(String[] args) throws IOException,
             ClassNotFoundException, InterruptedException
     {
+        PageRank.printArray(args);
         Configuration conf = new Configuration();
-        String[] otherArgs = new GenericOptionsParser(conf, args)
-                .getRemainingArgs();
+        String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
         if (otherArgs.length != 3)
         {
             System.err.println("Usage: rank <in> <out>");
