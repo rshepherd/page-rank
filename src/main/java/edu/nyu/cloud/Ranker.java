@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -17,13 +15,11 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
-public class PageRanker
+public class Ranker
 {
-    private static final Log LOG = LogFactory.getLog(PageRanker.class);
-    
     // Input record format: inlink \t pagerank \t outlink1 \t outlink2 \t ...
     // Emit key-value pairs: key=url value=rank -or- key=url value=outlinks
-    public static class PageRankMapper extends Mapper<LongWritable, Text, Text, Text>
+    public static class RankMapper extends Mapper<LongWritable, Text, Text, Text>
     {
         public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException
         {
@@ -52,7 +48,7 @@ public class PageRanker
     }
 
     // Emit: key=url value=pagerank \t outlink1 \t outlink2 \t ...
-    public static class PageRankReducer extends Reducer<Text, Text, Text, Text>
+    public static class RankReducer extends Reducer<Text, Text, Text, Text>
     {
 
         public void reduce(Text key, Iterator<Text> values, Context context)
@@ -89,9 +85,9 @@ public class PageRanker
             System.exit(2);
         }
         Job job = new Job(conf, "page rank");
-        job.setJarByClass(PageRanker.class);
-        job.setMapperClass(PageRankMapper.class);
-        job.setReducerClass(PageRankReducer.class);
+        job.setJarByClass(Ranker.class);
+        job.setMapperClass(RankMapper.class);
+        job.setReducerClass(RankReducer.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
         FileInputFormat.addInputPath(job, new Path(otherArgs[1]));

@@ -20,7 +20,6 @@ public class GraphBuilder
     private static final Pattern TITLE_PATTERN  = Pattern.compile("<title>(.*?)</title>", Pattern.DOTALL);
     private static final Pattern LINK_PATTERN   = Pattern.compile("\\[\\[(.*?)\\]\\]", Pattern.DOTALL);
     private static final String  INIT_PAGE_RANK = "1"; 
-
     
     public static class GraphMapper extends Mapper<Object, Text, Text, Text>
     {

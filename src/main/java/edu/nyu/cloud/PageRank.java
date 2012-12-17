@@ -4,19 +4,21 @@ import java.io.IOException;
 
 public class PageRank
 {
- 
     public static final char DELIMITER = '\t';
     
-    public static void main(String[] args) throws ClassNotFoundException,
-            IOException, InterruptedException
+    public static void main(String[] args) throws ClassNotFoundException, IOException, InterruptedException
     {
         if (args.length > 0 && args[0].equals("graph"))
         {
             GraphBuilder.main(args);
         } else if (args.length > 0 && args[0].equals("rank"))
         {
-            PageRanker.main(args);
-        } else {
+            Ranker.main(args);
+        } else if (args.length > 0 && args[0].equals("sort"))
+        {
+            Sorter.main(args);
+        } else
+        {
             System.out.println("Specify a job.");
         }
     }
