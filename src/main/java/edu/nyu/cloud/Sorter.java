@@ -23,9 +23,9 @@ public class Sorter
                 throws IOException, InterruptedException
         {
             StringTokenizer st = new StringTokenizer(value.toString(), PageRank.DELIMITER+"");
-            String url = st.nextToken();
+            Text url = new Text(st.nextToken());
             double rank = Double.parseDouble(st.nextToken());
-            context.write(new DoubleWritable(rank), new Text(url));
+            context.write(new DoubleWritable(rank), url);
         }
     }
 

@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -21,6 +23,9 @@ public class Ranker
     // Emit key-value pairs: key=url value=rank -or- key=url value=outlinks
     public static class RankMapper extends Mapper<LongWritable, Text, Text, Text>
     {
+        private static final Log LOG = LogFactory.getLog(RankMapper.class);
+        
+        @Override
         public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException
         {
             String line = value.toString();
@@ -42,6 +47,9 @@ public class Ranker
 
         private Text rank(String parentPageRank, int numOutlinks)
         {
+            if(numOutlinks == 0) {
+                return new Text( parentPageRank.toString() );
+            }
             Double rank = Double.valueOf(parentPageRank) / numOutlinks;
             return new Text( rank.toString() );
         }
@@ -50,16 +58,19 @@ public class Ranker
     // Emit: key=url value=pagerank \t outlink1 \t outlink2 \t ...
     public static class RankReducer extends Reducer<Text, Text, Text, Text>
     {
-
-        public void reduce(Text key, Iterator<Text> values, Context context)
+        private static final Log LOG = LogFactory.getLog(RankReducer.class);
+        
+        @Override
+        public void reduce(Text key, Iterable<Text> values, Context context)
                 throws IOException, InterruptedException
         {
-            double rank = 0.0f;
+            double rank = 0.0;
             StringBuilder outlinks = new StringBuilder();
 
-            while (values.hasNext())
+            Iterator<Text> i = values.iterator();
+            while (i.hasNext())
             {
-                String v = values.next().toString();
+                String v = i.next().toString();
                 if (PageRank.isNumeric(v))
                 {
                     rank += Double.valueOf(v);
@@ -84,7 +95,7 @@ public class Ranker
             System.err.println("Usage: rank <in> <out>");
             System.exit(2);
         }
-        Job job = new Job(conf, "page rank");
+        Job job = new Job(conf, "rank");
         job.setJarByClass(Ranker.class);
         job.setMapperClass(RankMapper.class);
         job.setReducerClass(RankReducer.class);

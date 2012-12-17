@@ -26,6 +26,7 @@ public class GraphBuilder
         private static final Log LOG = LogFactory.getLog(GraphMapper.class);
         
         // Output record format: link \t pagerank \t outlink1 \t outlink2 \t ...
+        @Override
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException
         {
             String pageBody = value.toString();
@@ -34,7 +35,8 @@ public class GraphBuilder
             Matcher matcher = TITLE_PATTERN.matcher(pageBody);
             if (matcher.find())
             {
-                pageTitle = matcher.group().replaceAll("</?title>", "").trim();
+                pageTitle = matcher.group().replaceAll("</?title>", "");
+                pageTitle = pageTitle.replaceAll("\\s", "");
             } 
             else
             {
@@ -68,7 +70,7 @@ public class GraphBuilder
           System.err.println("Usage: graph <in> <out>");
           System.exit(2);
         }
-        Job job = new Job(conf, "graph builder");
+        Job job = new Job(conf, "graph");
         job.setJarByClass(GraphBuilder.class);
         job.setMapperClass(GraphMapper.class);
         job.setOutputKeyClass(Text.class);

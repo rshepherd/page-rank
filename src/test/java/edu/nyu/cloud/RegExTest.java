@@ -12,6 +12,11 @@ public class RegExTest
     @Test
     public void test()
     {
+        String str = '\t' + "kjasdf " + '\t';
+        System.out.println("|"+str.replaceAll("\\W", "")+"|");
+        System.exit(0);
+        
+        
         Pattern pattern = Pattern.compile("<title>(.*?)</title>", Pattern.DOTALL);
         Matcher matcher = pattern.matcher(text);
         if (matcher.find()) { 

@@ -18,13 +18,13 @@ public class PageRankerTest
         //inlink \t pagerank \t outlink1 \t outlink2 \t ...
         for(int i = 0 ; i < 10 ; ++i) 
         {
-            map("somelink\t1\totherlink1\totherlink2\totherlink3");
+            map("!Xaaaa      1       Botswana        Namibie L");
         }
     }
     
     private void map(String line) throws IOException, InterruptedException
     {
-        StringTokenizer st = new StringTokenizer(line);
+        StringTokenizer st = new StringTokenizer(line, PageRank.DELIMITER+"");
         Text inlink = new Text(st.nextToken());
         Text outlinkRank = rank(st.nextToken(), st.countTokens());
         while (st.hasMoreTokens())

@@ -38,6 +38,7 @@ public class PageRank
     
     public static void printArray(String[] args) 
     {
+        System.out.print("jar args: ");
         for(String s : args)
             System.out.print(s+" ");
         System.out.println();
