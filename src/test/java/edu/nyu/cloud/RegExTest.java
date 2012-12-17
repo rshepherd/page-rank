@@ -29,6 +29,11 @@ public class RegExTest
           }
           System.out.println(link.replaceAll("[\\[\\]]", "")); 
         }
+        
+        System.out.println("true="+("234.23432".matches("((-|\\+)?[0-9]+(\\.[0-9]+)?)+")));
+        System.out.println("true="+("23423432".matches("((-|\\+)?[0-9]+(\\.[0-9]+)?)+")));
+        System.out.println("false="+("234x23432".matches("((-|\\+)?[0-9]+(\\.[0-9]+)?)+")));
+        System.out.println("false="+("".matches("((-|\\+)?[0-9]+(\\.[0-9]+)?)+")));
     }
 
 }

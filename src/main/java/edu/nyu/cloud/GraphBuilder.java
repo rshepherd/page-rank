@@ -16,7 +16,6 @@ import org.apache.hadoop.util.GenericOptionsParser;
 
 public class GraphBuilder
 {
-    private static final char SEP = '\f';
     
     private static final Pattern TITLE = Pattern.compile("<title>(.*?)</title>", Pattern.DOTALL);
     private static final Pattern LINK = Pattern.compile("\\[\\[(.*?)\\]\\]", Pattern.DOTALL);
@@ -36,7 +35,7 @@ public class GraphBuilder
                 return;
             }
 
-            StringBuffer links = new StringBuffer("1").append(SEP);
+            StringBuilder links = new StringBuilder("1").append(Driver.SEP);
             matcher = LINK.matcher(text.toString());
             while (matcher.find())
             {
@@ -46,16 +45,16 @@ public class GraphBuilder
                 {
                     link = link.substring(0, pipe);
                 }
-                links.append(link).append(SEP);
+                links.append(link).append(Driver.SEP);
             }
 
+            // Emit key=url value=[rank, outlinks]
             context.write(new Text(title), new Text(links.toString()));
         }
     }
 
     public static class GraphReducer extends Reducer<Text, Text, Text, Text>
     {
-
         public void reduce(Text key, Text value, Context context) throws IOException, InterruptedException
         {
             context.write(key, value);
@@ -64,7 +63,7 @@ public class GraphBuilder
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException
     {
-        print("args", args);
+        Driver.print("args", args);
         Configuration conf = new Configuration();
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
         if (otherArgs.length != 3) {
@@ -80,14 +79,6 @@ public class GraphBuilder
         FileInputFormat.addInputPath(job, new Path(otherArgs[1]));
         FileOutputFormat.setOutputPath(job, new Path(otherArgs[2]));
         System.exit(job.waitForCompletion(true) ? 0 : 1);
-    }
-    
-    private static void print(String name, String[] args) 
-    {
-        System.out.println(name);
-        for(String s : args)
-            System.out.print(s+" ");
-        System.out.println();
     }
     
 }
