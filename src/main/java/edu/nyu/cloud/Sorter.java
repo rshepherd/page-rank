@@ -14,6 +14,8 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
+import com.talis.labs.pagerank.mapreduce.DoubleWritableDecreasingComparator;
+
 public class Sorter
 {
     public static class SorterMapper extends Mapper<LongWritable, Text, DoubleWritable, Text>
@@ -45,9 +47,19 @@ public class Sorter
         job.setMapperClass(SorterMapper.class);
         job.setOutputKeyClass(DoubleWritable.class);
         job.setOutputValueClass(Text.class);
+        job.setSortComparatorClass(DoubleWritableDecreasing.class);
         FileInputFormat.addInputPath(job, new Path(otherArgs[1]));
         FileOutputFormat.setOutputPath(job, new Path(otherArgs[2]));
         System.exit(job.waitForCompletion(true) ? 0 : 1);
+    }
+    
+    private static class DoubleWritableDecreasing extends DoubleWritable.Comparator {
+
+        @Override
+        public int compare(byte[] b1, int s1, int l1, byte[] b2, int s2, int l2) {
+            return -super.compare(b1, s1, l1, b2, s2, l2);
+        }
+
     }
 
 }
