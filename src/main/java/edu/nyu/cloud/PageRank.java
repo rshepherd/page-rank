@@ -1,47 +1,43 @@
 package edu.nyu.cloud;
 
-import java.io.IOException;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.util.ToolRunner;
 
-public class PageRank
+public class PageRank extends PageRankTool
 {
-    public static final char DELIMITER = '\t';
     
-    public static void main(String[] args) throws ClassNotFoundException, IOException, InterruptedException
+    public static void main(String[] args) throws Exception 
     {
-        if (args.length > 0 && args[0].equals("graph"))
-        {
-            GraphBuilder.main(args);
-        } else if (args.length > 0 && args[0].equals("rank"))
-        {
-            Ranker.main(args);
-        } else if (args.length > 0 && args[0].equals("sort"))
-        {
-            Sorter.main(args);
-        } else
-        {
-            System.out.println("Specify a job.");
+        if (args.length != 3) {
+            System.err.println("usage: input-path output-path iterations") ;
+            System.exit(-1);
         }
-    }
-
-    public static boolean isNumeric(String s)
-    {
-        return s.matches("((-|\\+)?[0-9]+(\\.[0-9]+)?)+");
-    }
-    
-    public static int nthIndexOf(String str, char c, int n) {
-        n--;
-        int pos = str.indexOf(c, 0);
-        while (n-- > 0 && pos != -1)
-            pos = str.indexOf(c, pos+1);
-        return pos;
+        
+        System.exit (
+            ToolRunner.run(new Configuration(), new PageRank(), args)
+        );
     }
     
-    public static void printArray(String[] args) 
+    public int run(String[] args) throws Exception
     {
-        System.out.print("jar args: ");
-        for(String s : args)
-            System.out.print(s+" ");
-        System.out.println();
+        Util.print("PageRank.run", args);
+        
+        String inputPath = args[0];
+        String outputPath = args[1];
+        
+        String prevRankPath = outputPath + "/rank/prev";
+        String currRankPath = outputPath + "/rank/curr";
+        String resultPath = outputPath + "/results";
+        
+        runTool(new GraphBuilder(), new String[] { inputPath, prevRankPath } );
+        runTool(new Ranker(), new String[] { prevRankPath, currRankPath } );
+        runTool(new Sorter(), new String[] { currRankPath, resultPath } );
+        
+        return 0;
     }
 
+    // TODO
+    // delete(new Path(outputPath)); // Wipe previous run?
+    // move(out, in); // move output of last iter to input  
+    
 }
