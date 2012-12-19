@@ -14,8 +14,6 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
-import com.talis.labs.pagerank.mapreduce.DoubleWritableDecreasingComparator;
-
 public class Sorter
 {
     public static class SorterMapper extends Mapper<LongWritable, Text, DoubleWritable, Text>
