@@ -6,8 +6,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.ToolRunner;
 
-// TODO: cleanup. delete previous run
-
 public class PageRank extends PageRankTool
 {
     
@@ -22,11 +20,15 @@ public class PageRank extends PageRankTool
             ToolRunner.run(new Configuration(), new PageRank(), args)
         );
     }
+
+    public static final char DELIM = '\t';
+    public static final double DAMP_FACTOR = 0.85;
+    public static final double INIT_RANK = 1.0 - DAMP_FACTOR;
+    public static final double CONVERGENCE_CHECK_INTERVAL = 10;
+    public static final String OUTPUT_FILENAME = "/part-r-00000";
     
     public int run(String[] args) throws Exception
     {
-        printArgs("PageRank.run", args);
-        
         // Parse arguments
         String inputPath = args[0];
         String outputPath = args[1];
@@ -47,7 +49,7 @@ public class PageRank extends PageRankTool
         // Execute iterations
         for (int i = 1; i < iterations; ++i)
         {
-            runTool(new DanglerRankAccumulator(), new String[] { prevRankPath, danglersPath });
+            runTool(new DanglerAccumulator(), new String[] { prevRankPath, danglersPath });
             String danglerDistro = getDanglerDistribution(danglersPath);
             runTool(new Ranker(), new String[] { prevRankPath, currRankPath, linkCount, danglerDistro });
             move(new Path(currRankPath), new Path(prevRankPath));
@@ -57,13 +59,15 @@ public class PageRank extends PageRankTool
         // Finalize output
         runTool(new Sorter(), new String[] { prevRankPath, resultsPath } );
         
+        // TODO: additional HDFS cleanup
+
         return 0;
     }
 
     private String getDanglerDistribution(String danglersPath) throws IOException
     {
         String danglerTotalRank = FileUtils.readOneToken(getFileSystem(),
-                danglersPath + PageRankParams.OUTPUT_FILENAME);
+                danglersPath + PageRank.OUTPUT_FILENAME);
 
         return danglerTotalRank != null ? danglerTotalRank : "0";
     }
@@ -72,7 +76,7 @@ public class PageRank extends PageRankTool
     {
         // TODO - Use mapreduce for this
         return String.valueOf(FileUtils.countLines(getFileSystem(), prevRankPath
-                + PageRankParams.OUTPUT_FILENAME));
+                + PageRank.OUTPUT_FILENAME));
     }
 
 }

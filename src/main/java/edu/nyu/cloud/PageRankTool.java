@@ -12,8 +12,8 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
 /**
- * Extension of Configured Tool with convenience methods useful
- * in various stages of our job flow
+ * Extension of a Configured Tool imple with convenience methods useful
+ * in various stages of the page rank job flow
  */
 public abstract class PageRankTool extends Configured implements Tool 
 {

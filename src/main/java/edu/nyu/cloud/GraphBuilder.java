@@ -67,7 +67,7 @@ public class GraphBuilder extends PageRankTool
 
             // Extract the outbound links, filter dupes and self-references.
             // Links are in the format [[ page name | display text ]].
-            StringBuilder links = new StringBuilder(PageRankParams.INIT_RANK+"");
+            StringBuilder links = new StringBuilder(PageRank.INIT_RANK+"");
             Set<String> dupeFilter = new HashSet<String>();
             matcher = LINK_PATTERN.matcher(pageBody);
             while (matcher.find())
@@ -81,7 +81,7 @@ public class GraphBuilder extends PageRankTool
                 // Ignore duplicates or links itself
                 if (!pageName.equals(link) && dupeFilter.add(link))
                 {
-                    links.append(PageRankParams.DELIM).append(link);
+                    links.append(PageRank.DELIM).append(link);
                 }
             }
             

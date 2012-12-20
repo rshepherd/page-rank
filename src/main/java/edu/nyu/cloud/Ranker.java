@@ -25,7 +25,7 @@ public class Ranker extends PageRankTool
         Job job = new Job(getConf(), "Page Rank Ranking Iteration");
         
         // Config i/o
-        Path input = new Path(args[0] + PageRankParams.OUTPUT_FILENAME);  
+        Path input = new Path(args[0] + PageRank.OUTPUT_FILENAME);  
         FileInputFormat.addInputPath(job, input);
         Path output = new Path(args[1]); 
         FileOutputFormat.setOutputPath(job, output);
@@ -57,7 +57,7 @@ public class Ranker extends PageRankTool
             String line = value.toString();
             
             // Emit each outlink and its rank
-            StringTokenizer st = new StringTokenizer(line, PageRankParams.DELIM+"");
+            StringTokenizer st = new StringTokenizer(line, PageRank.DELIM+"");
             Text pageName = new Text(st.nextToken());
             Double pageRank = Double.parseDouble(st.nextToken());
             Text outlinkRank = sliceRank(pageRank, st.countTokens());
@@ -67,7 +67,7 @@ public class Ranker extends PageRankTool
             {
                 Text outlink = new Text(st.nextToken()); 
                 context.write(outlink, outlinkRank);
-                outlinks.append(PageRankParams.DELIM).append(outlink);
+                outlinks.append(PageRank.DELIM).append(outlink);
             }
             
             String links = outlinks.toString();
@@ -132,11 +132,11 @@ public class Ranker extends PageRankTool
                     rank += Double.valueOf(v);
                 } else
                 {
-                    outlinks.append(PageRankParams.DELIM).append(v);
+                    outlinks.append(PageRank.DELIM).append(v);
                 }
             }
             
-            rank = 1 - PageRankParams.DAMP_FACTOR + (PageRankParams.DAMP_FACTOR * rank);
+            rank = 1 - PageRank.DAMP_FACTOR + (PageRank.DAMP_FACTOR * rank);
             rank += danglerContribution;
             
             // Output record format: inlink \t pagerank \t outlink1 \t outlink2 \t ...

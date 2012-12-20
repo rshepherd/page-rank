@@ -22,7 +22,7 @@ public class Sorter extends PageRankTool
         Job job = new Job(getConf(), "Page Rank Sorting");
         
         // Config file system
-        Path input = new Path(args[0] + PageRankParams.OUTPUT_FILENAME);  
+        Path input = new Path(args[0] + PageRank.OUTPUT_FILENAME);  
         Path output = new Path(args[1]); 
         FileOutputFormat.setOutputPath(job, output);
         FileInputFormat.addInputPath(job, input);
@@ -43,7 +43,7 @@ public class Sorter extends PageRankTool
         public void map(LongWritable key, Text value, Context context)
                 throws IOException, InterruptedException
         {
-            StringTokenizer st = new StringTokenizer(value.toString(), PageRankParams.DELIM+"");
+            StringTokenizer st = new StringTokenizer(value.toString(), PageRank.DELIM+"");
             Text page = new Text(st.nextToken());
             double rank = Double.parseDouble(st.nextToken());
             context.write(new DoubleWritable(rank), page);

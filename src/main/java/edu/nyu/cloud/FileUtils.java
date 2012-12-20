@@ -45,7 +45,7 @@ public class FileUtils
             Path file = new Path(fileName);
             InputStreamReader stream = new InputStreamReader(fs.open(file));
             BufferedReader in = new BufferedReader(stream);
-            StringTokenizer st = new StringTokenizer(in.readLine(), PageRankParams.DELIM + "");
+            StringTokenizer st = new StringTokenizer(in.readLine(), PageRank.DELIM + "");
             String token = st.nextToken();
             in.close();
             return token;

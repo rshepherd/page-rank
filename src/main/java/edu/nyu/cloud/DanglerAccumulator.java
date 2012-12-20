@@ -17,7 +17,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 // Accumulate ranks of all dangling nodes for distribution across 
 // the rest of the nodes in the graph.
 
-public class DanglerRankAccumulator extends PageRankTool
+public class DanglerAccumulator extends PageRankTool
 {
 
     @Override
@@ -28,22 +28,22 @@ public class DanglerRankAccumulator extends PageRankTool
         Job job = new Job(getConf(), "Dangler Accumulator");
         
         // Config i/o
-        Path input = new Path(args[0] + PageRankParams.OUTPUT_FILENAME);  
+        Path input = new Path(args[0] + PageRank.OUTPUT_FILENAME);  
         FileInputFormat.addInputPath(job, input);
         Path output = new Path(args[1]); 
         FileOutputFormat.setOutputPath(job, output);
         
         // Config job
-        job.setJarByClass(DanglerRankAccumulator.class);
-        job.setMapperClass(DanglerRankMapper.class);
-        job.setReducerClass(DanglerRankReducer.class);
+        job.setJarByClass(DanglerAccumulator.class);
+        job.setMapperClass(DanglerMapper.class);
+        job.setReducerClass(DanglerReducer.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
         
         return job.waitForCompletion(true) ? 0 : 1;
     }
 
-    public static class DanglerRankMapper extends Mapper<LongWritable, Text, Text, Text>
+    public static class DanglerMapper extends Mapper<LongWritable, Text, Text, Text>
     {
         private static final Text DANGLER_KEY = new Text("DANGLER");
         
@@ -51,7 +51,7 @@ public class DanglerRankAccumulator extends PageRankTool
         public void map(LongWritable key, Text value, Context context)
                 throws IOException, InterruptedException
         {
-            StringTokenizer st = new StringTokenizer(value.toString(), PageRankParams.DELIM+"");
+            StringTokenizer st = new StringTokenizer(value.toString(), PageRank.DELIM+"");
             String pageName = st.nextToken(); 
             String pageRank = st.nextToken();
             if (!st.hasMoreTokens())
@@ -61,7 +61,7 @@ public class DanglerRankAccumulator extends PageRankTool
         }
     }
 
-    public static class DanglerRankReducer extends Reducer<Text, Text, Text, NullWritable>
+    public static class DanglerReducer extends Reducer<Text, Text, Text, NullWritable>
     {
         @Override
         public void reduce(Text key, Iterable<Text> values, Context context)
