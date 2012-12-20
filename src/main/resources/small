@@ -1,0 +1,6 @@
+<page><title>A</title><text>[[B]] [[E]]</text></page>
+<page><title>B</title><text>[[C]]</text></page>
+<page><title>C</title><text>[[D]]</text></page>
+<page><title>E</title><text>[[F]]</text></page>
+<page><title>F</title><text>[[G]]</text></page>
+<page><title>G</title><text>[[A]]</text></page>

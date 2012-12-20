@@ -20,11 +20,11 @@ public class GraphBuilder extends PageRankTool
     
     public int run(String[] args) throws Exception
     {
-        Util.print("GraphBuilder.run", args);
+        printArgs("GraphBuilder.run", args);
         
         Job job = new Job(getConf(), "Page Rank Graph Builder");
         
-        // Config file system
+        // Config i/o
         Path input = new Path(args[0]);  // wikipedia data 
         FileInputFormat.addInputPath(job, input);
         Path output = new Path(args[1]); // 'previous' rank data
@@ -57,7 +57,7 @@ public class GraphBuilder extends PageRankTool
             Matcher matcher = TITLE_PATTERN.matcher(pageBody);
             if (matcher.find())
             {
-                pageName = matcher.group().replaceAll("</?title>", "");
+                pageName = matcher.group().replaceAll("</?title>", "").trim();
             } 
             else
             {
@@ -67,24 +67,23 @@ public class GraphBuilder extends PageRankTool
 
             // Extract the outbound links, filter dupes and self-references.
             // Links are in the format [[ page name | display text ]].
-            StringBuilder links = new StringBuilder(PageRankParams.INIT_PAGE_RANK);
+            StringBuilder links = new StringBuilder(PageRankParams.INIT_RANK+"");
             Set<String> dupeFilter = new HashSet<String>();
             matcher = LINK_PATTERN.matcher(pageBody);
             while (matcher.find())
             {
-                String link = matcher.group().replaceAll("[\\[\\]]", "");
+                String link = matcher.group().replaceAll("[\\[\\]]", "").trim();
                 int pipeIndex = link.indexOf("|");
                 if (pipeIndex > -1)
                 {
                     link = link.substring(0, pipeIndex);
                 }
+                // Ignore duplicates or links itself
                 if (!pageName.equals(link) && dupeFilter.add(link))
                 {
-                    links.append(PageRankParams.DELIMITER).append(link);
+                    links.append(PageRankParams.DELIM).append(link);
                 }
             }
-            
-            // TODO: What to do if there are no outbound links? AKA this is a dangling page
             
             // Output record format: link \t pagerank \t outlink1 \t outlink2 \t ...
             context.write(new Text(pageName), new Text(links.toString()));

@@ -9,7 +9,6 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
@@ -18,12 +17,12 @@ public class Sorter extends PageRankTool
     @Override
     public int run(String[] args) throws Exception
     {
-        Util.print("Sorter.run", args);
+        printArgs("Sorter.run", args);
         
         Job job = new Job(getConf(), "Page Rank Sorting");
         
         // Config file system
-        Path input = new Path(args[0] + "/part-r-00000");  
+        Path input = new Path(args[0] + PageRankParams.OUTPUT_FILENAME);  
         Path output = new Path(args[1]); 
         FileOutputFormat.setOutputPath(job, output);
         FileInputFormat.addInputPath(job, input);
@@ -44,10 +43,10 @@ public class Sorter extends PageRankTool
         public void map(LongWritable key, Text value, Context context)
                 throws IOException, InterruptedException
         {
-            StringTokenizer st = new StringTokenizer(value.toString(), PageRankParams.DELIMITER+"");
-            Text url = new Text(st.nextToken());
+            StringTokenizer st = new StringTokenizer(value.toString(), PageRankParams.DELIM+"");
+            Text page = new Text(st.nextToken());
             double rank = Double.parseDouble(st.nextToken());
-            context.write(new DoubleWritable(rank), url);
+            context.write(new DoubleWritable(rank), page);
         }
     }
 

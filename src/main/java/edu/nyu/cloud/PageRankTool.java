@@ -42,11 +42,10 @@ public abstract class PageRankTool extends Configured implements Tool
         return fs.delete(p, true);
     }
     
-    protected void move(Path moveThis, Path toHere) throws IOException 
-    {
+    protected void move(Path src, Path dst) throws IOException {
         FileSystem fs = getFileSystem();
-        fs.delete(toHere, true) ;
-        fs.rename(moveThis, toHere) ;
+        fs.delete(dst, true) ;
+        fs.rename(src,  dst) ;
     }
 
     protected FileSystem getFileSystem() throws IOException 
@@ -54,6 +53,13 @@ public abstract class PageRankTool extends Configured implements Tool
         Configuration c = getConf();
         FileSystem fs = FileSystem.get(c);
         return fs;
+    }
+    
+    public static void printArgs(String source, String[] args) 
+    {
+        System.out.println(source + " arguments:");
+        for(String s : args)
+            System.out.println("\t" + s);
     }
 
 }
