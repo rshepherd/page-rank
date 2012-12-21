@@ -1,6 +1,10 @@
 package edu.nyu.cloud;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URISyntaxException;
+import java.util.StringTokenizer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -56,7 +60,7 @@ public abstract class PageRankTool extends Configured implements Tool
     {
         FileSystem fs = getFileSystem();
         String fileName = pathName + PageRank.OUTPUT_FILENAME;
-        String danglerTotalRank = FileUtils.readOneToken(fs,fileName);
+        String danglerTotalRank = readOneToken(fs,fileName);
         return danglerTotalRank != null ? danglerTotalRank : "0";
     }
     
@@ -64,18 +68,36 @@ public abstract class PageRankTool extends Configured implements Tool
     {
         FileSystem fs = getFileSystem();
         String fileName = pathName + PageRank.OUTPUT_FILENAME;
-        String rankDifferential = FileUtils.readOneToken(fs,fileName);
+        String rankDifferential = readOneToken(fs,fileName);
         if(rankDifferential == null) {
             throw new RuntimeException("Unable to retrieve rank differential.");
         }
         return Double.valueOf(rankDifferential);
     }
 
-    protected String getLinkCount(String pathName) throws IOException
+    protected String getLinkCount(String pathName) throws IOException, URISyntaxException
     {
         FileSystem fs = getFileSystem();
         String fileName = pathName + PageRank.OUTPUT_FILENAME;
-        return String.valueOf(FileUtils.countLines(fs, fileName));
+        String linkCount = readOneToken(fs,fileName);
+        return linkCount != null ? linkCount : "0";
+    }
+    
+    protected String readOneToken(FileSystem fs, String fileName)
+    {
+        try
+        {
+            Path file = new Path(fileName);
+            InputStreamReader stream = new InputStreamReader(fs.open(file));
+            BufferedReader in = new BufferedReader(stream);
+            StringTokenizer st = new StringTokenizer(in.readLine(), PageRank.DELIM + "");
+            String token = st.nextToken();
+            in.close();
+            return token;
+        } catch (Exception e)
+        {
+            return null;
+        }
     }
     
     public static void printArgs(String source, String[] args) 

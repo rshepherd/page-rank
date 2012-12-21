@@ -1,5 +1,7 @@
 package edu.nyu.cloud;
 
+import java.io.IOException;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ToolRunner;
 
@@ -24,41 +26,62 @@ public class PageRank extends PageRankTool
         String prevRankPath  = outputPath + "/rank/prev";
         String currRankPath  = outputPath + "/rank/curr";
         String danglerPath   = outputPath + "/rank/dang";
+        String counterPath   = outputPath + "/rank/count";
         String convergePath  = outputPath + "/rank/conv";
         String resultsPath   = outputPath + "/results";
         
-        // Initialize job
+        // Initialize the graph
         runPhase(new GraphBuilder(), new String[] { inputPath, prevRankPath } );
         runPhase(new Ranker(), new String[] { prevRankPath, currRankPath } );
-        String linkCount = getLinkCount(currRankPath);
-        mv(currRankPath, prevRankPath);
+        
+        // Find out how many pages total there are
+        runPhase(new Counter(), new String[] { currRankPath, counterPath } );
+        String linkCount = getLinkCount(counterPath);
         
         // Execute iterations
         for (int i = 1; i < iterations; ++i)
         {
-            System.out.println("Iteration " + i);
-            runPhase(new DanglerAccumulator(), new String[] { prevRankPath, danglerPath });
-            runPhase(new Ranker(), new String[] { prevRankPath, currRankPath, linkCount, getDanglersRankSum(danglerPath) });
+            // The output of the last iteration is now the 'previous' output
             mv(currRankPath, prevRankPath);
-            rm(danglerPath);
+            
+            // Get total rank of all danglers to be divided among all other nodes
+            String danglerRankSum = getDanglerRankSum(prevRankPath, danglerPath);
+            
+            // Run the ranker again.
+            runPhase(new Ranker(), new String[] { prevRankPath, currRankPath, linkCount, danglerRankSum });
 
+            // Maybe check for convergence
             if (i % CONVERGENCE_INTERVAL == 0)
             {
-                runPhase(new ConvergenceDetector(), new String[] { prevRankPath, convergePath });
-                if (getRankDifferential(convergePath) <= CONVERGENCE_TOLERANCE)
+                runPhase(new ConvergenceDetector(), new String[] { currRankPath, convergePath });
+                double rankDifferential = getRankDifferential(convergePath);
+                System.out.println("Rank differential at iteration " + i + " is " + rankDifferential);
+                if (rankDifferential <= CONVERGENCE_TOLERANCE)
                 {
                     System.out.println("Convergence reached at " + i + "th iteration.");
                     rm(convergePath);
                     break;
                 }
             }
+            
+            System.out.println("Iteration " + i + " completed.");
         }
         
         // Finalize output
-        runPhase(new Sorter(), new String[] { prevRankPath, resultsPath } );
-        rm(prevRankPath);
+        runPhase(new Sorter(), new String[] { currRankPath, resultsPath } );
+        
+        // Clean-up
+        rm(outputPath + "/rank");
 
         return 0;
+    }
+
+    private String getDanglerRankSum(String prevRankPath, String danglerPath) throws Exception, IOException
+    {
+        runPhase(new DanglerAccumulator(), new String[] { prevRankPath, danglerPath });
+        String danglersRankSum = getDanglersRankSum(danglerPath);
+        rm(danglerPath);
+        return danglersRankSum;
     }
     
     public static void main(String[] args) throws Exception 
