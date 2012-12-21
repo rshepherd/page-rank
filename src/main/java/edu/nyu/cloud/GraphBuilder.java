@@ -8,12 +8,14 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.util.ToolRunner;
 
 public class GraphBuilder extends PageRankTool 
 {
@@ -45,6 +47,7 @@ public class GraphBuilder extends PageRankTool
         
         private static final Pattern TITLE_PATTERN  = Pattern.compile("<title>(.*?)</title>", Pattern.DOTALL);
         private static final Pattern LINK_PATTERN   = Pattern.compile("\\[\\[(.*?)\\]\\]", Pattern.DOTALL);
+        private static final String  INITIAL_RANKS  = "" + PageRank.INIT_RANK + PageRank.DELIM + PageRank.INIT_RANK;
         
         @Override
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException
@@ -67,7 +70,7 @@ public class GraphBuilder extends PageRankTool
 
             // Extract the outbound links, filter dupes and self-references.
             // Links are in the format [[ page name | display text ]].
-            StringBuilder links = new StringBuilder(PageRank.INIT_RANK+"");
+            StringBuilder links = new StringBuilder(INITIAL_RANKS);
             Set<String> dupeFilter = new HashSet<String>();
             matcher = LINK_PATTERN.matcher(pageBody);
             while (matcher.find())
@@ -85,9 +88,20 @@ public class GraphBuilder extends PageRankTool
                 }
             }
             
-            // Output record format: link \t pagerank \t outlink1 \t outlink2 \t ...
+            // Output record format: link \t pagerank \t old page rank \t outlink1 \t outlink2 \t ...
             context.write(new Text(pageName), new Text(links.toString()));
         }
+    }
+    
+    public static void main(String[] args) throws Exception {
+        System.exit (
+           ToolRunner.run (
+               new Configuration(), 
+               new GraphBuilder(), 
+               new String[] { "/Users/rshepherd/Documents/nyu/cloud/workspace/page-rank/src/main/resources/small", 
+                              "/Users/rshepherd/Documents/nyu/cloud/workspace/page-rank/src/main/resources/graph/" }
+               )
+           );
     }
    
 }

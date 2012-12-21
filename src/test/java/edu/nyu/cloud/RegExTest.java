@@ -12,6 +12,10 @@ public class RegExTest
     @Test
     public void test()
     {
+        String v = "pr=test";
+        System.out.println(v.replaceAll("pr=", ""));
+        System.exit(0);
+        
         String str = '\t' + "kjasdf " + '\t';
         System.out.println("|"+str.replaceAll("\\W", "")+"|");
         System.exit(0);

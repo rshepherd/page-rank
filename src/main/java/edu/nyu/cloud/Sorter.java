@@ -3,6 +3,7 @@ package edu.nyu.cloud;
 import java.io.IOException;
 import java.util.StringTokenizer;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -11,6 +12,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.util.ToolRunner;
 
 public class Sorter extends PageRankTool 
 {
@@ -21,11 +23,11 @@ public class Sorter extends PageRankTool
         
         Job job = new Job(getConf(), "Page Rank Sorting");
         
-        // Config file system
+        // Config i/o
         Path input = new Path(args[0] + PageRank.OUTPUT_FILENAME);  
+        FileInputFormat.addInputPath(job, input);
         Path output = new Path(args[1]); 
         FileOutputFormat.setOutputPath(job, output);
-        FileInputFormat.addInputPath(job, input);
         
         // Config job
         job.setJarByClass(Sorter.class);
@@ -44,19 +46,27 @@ public class Sorter extends PageRankTool
                 throws IOException, InterruptedException
         {
             StringTokenizer st = new StringTokenizer(value.toString(), PageRank.DELIM+"");
-            Text page = new Text(st.nextToken());
-            double rank = Double.parseDouble(st.nextToken());
-            context.write(new DoubleWritable(rank), page);
+            Text pageName = new Text(st.nextToken());
+            double pageRank = Double.parseDouble(st.nextToken());
+            context.write(new DoubleWritable(pageRank), pageName);
         }
     }
 
     private static class DoubleWritableDecreasing extends DoubleWritable.Comparator {
-
         @Override
         public int compare(byte[] b1, int s1, int l1, byte[] b2, int s2, int l2) {
             return -super.compare(b1, s1, l1, b2, s2, l2);
         }
-
+    }
+    
+    public static void main(String[] args) throws Exception {
+        System.exit (
+           ToolRunner.run (
+               new Configuration(), 
+               new Sorter(), 
+               new String[] { "/Users/rshepherd/Documents/nyu/cloud/workspace/page-rank/src/main/resources/rank2/", 
+                              "/Users/rshepherd/Documents/nyu/cloud/workspace/page-rank/src/main/resources/sort/"})
+           );
     }
 
 }

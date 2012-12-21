@@ -12,7 +12,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
 /**
- * Extension of a Configured Tool imple with convenience methods useful
+ * Extension of a Configured Tool impl. with convenience methods useful
  * in various stages of the page rank job flow
  */
 public abstract class PageRankTool extends Configured implements Tool 
@@ -21,7 +21,7 @@ public abstract class PageRankTool extends Configured implements Tool
 
     public abstract int run(String[] args) throws Exception;
     
-    protected int runTool(Tool tool, String[] args) throws Exception
+    protected int runPhase(Tool tool, String[] args) throws Exception
     {
         return ToolRunner.run( 
             getConf(), 
@@ -30,19 +30,16 @@ public abstract class PageRankTool extends Configured implements Tool
         );
     }
     
-    protected boolean create(Path p) throws IOException 
+    protected boolean rm(String path) throws IOException 
     {
-        FileSystem fs = getFileSystem();
-        return fs.create(p, true) != null;
-    }
-    
-    protected boolean delete(Path p) throws IOException 
-    {
+        Path p = new Path(path);
         FileSystem fs = getFileSystem();
         return fs.delete(p, true);
     }
     
-    protected void move(Path src, Path dst) throws IOException {
+    protected void mv(String from, String to) throws IOException {
+        Path src = new Path(from);
+        Path dst = new Path(to);
         FileSystem fs = getFileSystem();
         fs.delete(dst, true) ;
         fs.rename(src,  dst) ;
@@ -53,6 +50,32 @@ public abstract class PageRankTool extends Configured implements Tool
         Configuration c = getConf();
         FileSystem fs = FileSystem.get(c);
         return fs;
+    }
+    
+    protected String getDanglersRankSum(String pathName) throws IOException
+    {
+        FileSystem fs = getFileSystem();
+        String fileName = pathName + PageRank.OUTPUT_FILENAME;
+        String danglerTotalRank = FileUtils.readOneToken(fs,fileName);
+        return danglerTotalRank != null ? danglerTotalRank : "0";
+    }
+    
+    protected Double getRankDifferential(String pathName) throws IOException
+    {
+        FileSystem fs = getFileSystem();
+        String fileName = pathName + PageRank.OUTPUT_FILENAME;
+        String rankDifferential = FileUtils.readOneToken(fs,fileName);
+        if(rankDifferential == null) {
+            throw new RuntimeException("Unable to retrieve rank differential.");
+        }
+        return Double.valueOf(rankDifferential);
+    }
+
+    protected String getLinkCount(String pathName) throws IOException
+    {
+        FileSystem fs = getFileSystem();
+        String fileName = pathName + PageRank.OUTPUT_FILENAME;
+        return String.valueOf(FileUtils.countLines(fs, fileName));
     }
     
     public static void printArgs(String source, String[] args) 

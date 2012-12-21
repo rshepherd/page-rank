@@ -5,6 +5,7 @@ import java.util.StringTokenizer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -14,6 +15,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.util.ToolRunner;
 
 public class Ranker extends PageRankTool 
 {
@@ -51,33 +53,29 @@ public class Ranker extends PageRankTool
     {
         static final Log LOG = LogFactory.getLog(RankMapper.class);
         
-        @Override
+        @Override @SuppressWarnings("unused")
         public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException
         {
-            String line = value.toString();
-            
-            // Emit each outlink and its rank
-            StringTokenizer st = new StringTokenizer(line, PageRank.DELIM+"");
+            StringTokenizer st = new StringTokenizer(value.toString(), PageRank.DELIM+"");
             Text pageName = new Text(st.nextToken());
             Double pageRank = Double.parseDouble(st.nextToken());
-            Text outlinkRank = sliceRank(pageRank, st.countTokens());
+            String oldPageRank = st.nextToken(); 
             
+            // Emit each outlink and its new rank
             StringBuilder outlinks = new StringBuilder();
+            Text outlinkRank = sliceRank(pageRank, st.countTokens());
             while (st.hasMoreTokens())
             {
                 Text outlink = new Text(st.nextToken()); 
                 context.write(outlink, outlinkRank);
-                outlinks.append(PageRank.DELIM).append(outlink);
+                outlinks.append(outlink).append(PageRank.DELIM);
             }
             
-            String links = outlinks.toString();
-            if (!links.isEmpty())
-            {
-                links = links.substring(1);
-            } 
-            
             // Emit the page name and all of its outlinks
-            context.write(pageName, new Text(links));
+            context.write(pageName, new Text(outlinks.toString()));
+            
+            // Emit the page name and its current page rank
+            context.write(pageName, new Text("pr="+pageRank.toString()));
         }
 
         private Text sliceRank(Double parentPageRank, int numOutlinks)
@@ -92,12 +90,51 @@ public class Ranker extends PageRankTool
         
     }
 
-    // Emit: key=url value=pagerank \t outlink1 \t outlink2 \t ...
+    // Emit: key=url value=pagerank \t old-pagerank \t outlink1 \t outlink2 \t ...
     public static class RankReducer extends Reducer<Text, Text, Text, Text>
     {
         static final Log LOG = LogFactory.getLog(RankReducer.class);
         
         private Double danglerContribution = 0.0;
+        
+        @Override
+        public void reduce(Text key, Iterable<Text> values, Context context)
+                throws IOException, InterruptedException
+        {
+            double newRank = 0.0;
+            StringBuilder oldRank = new StringBuilder();
+            StringBuilder outlinks = new StringBuilder();
+
+            for (Text value : values)
+            {
+                String v = value.toString();
+                if (isNumeric(v))
+                {
+                    newRank += Double.valueOf(v);
+                } 
+                else if (v.startsWith("pr="))
+                {
+                    v = v.replaceAll("pr=", "");
+                    oldRank.append(PageRank.DELIM).append(v);
+                } 
+                else
+                {
+                    outlinks.append(PageRank.DELIM).append(v);
+                }
+            }
+            
+            // Special case for 1st iteration. Graph builder output
+            // does not have entries for danglers and therefore no old rank
+            if(oldRank.length() == 0) {
+                oldRank.append(PageRank.DELIM).append(String.valueOf(newRank));
+            }
+            
+            newRank = 1 - PageRank.DAMP_FACTOR + (PageRank.DAMP_FACTOR * newRank);
+            newRank += danglerContribution;
+            
+            // Output record format: inlink \t pagerank \t old-pagerank \t outlink1 \t outlink2 \t ...
+            context.write(key, new Text(String.valueOf(newRank) + oldRank.toString() + outlinks.toString()));
+        }
         
         @Override
         protected void setup(Context context) throws IOException, InterruptedException
@@ -113,40 +150,24 @@ public class Ranker extends PageRankTool
                 danglerContribution = danglerDistro / linkCount;
             } catch (NumberFormatException e)
             {
-                LOG.info("RJS - Unable to parse config params.");
+                LOG.warn("Unable to parse dangler and link count params.");
             }
-        }
-        
-        @Override
-        public void reduce(Text key, Iterable<Text> values, Context context)
-                throws IOException, InterruptedException
-        {
-            double rank = 0.0;
-            StringBuilder outlinks = new StringBuilder();
-
-            for (Text value : values)
-            {
-                String v = value.toString();
-                if (isNumeric(v))
-                {
-                    rank += Double.valueOf(v);
-                } else
-                {
-                    outlinks.append(PageRank.DELIM).append(v);
-                }
-            }
-            
-            rank = 1 - PageRank.DAMP_FACTOR + (PageRank.DAMP_FACTOR * rank);
-            rank += danglerContribution;
-            
-            // Output record format: inlink \t pagerank \t outlink1 \t outlink2 \t ...
-            context.write(key, new Text(String.valueOf(rank) + outlinks.toString()));
         }
         
         private boolean isNumeric(String s)
         {
             return s.matches("((-|\\+)?[0-9]+(\\.[0-9]+)?)+");
         }
+    }
+    
+    public static void main(String[] args) throws Exception {
+        System.exit (
+           ToolRunner.run (
+               new Configuration(), 
+               new Ranker(), 
+               new String[] { "/Users/rshepherd/Documents/nyu/cloud/workspace/page-rank/src/main/resources/rank/", 
+                              "/Users/rshepherd/Documents/nyu/cloud/workspace/page-rank/src/main/resources/rank2/"})
+           );
     }
 
 }

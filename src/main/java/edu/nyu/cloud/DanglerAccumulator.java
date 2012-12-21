@@ -1,9 +1,9 @@
 package edu.nyu.cloud;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.StringTokenizer;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
@@ -13,9 +13,10 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.util.ToolRunner;
 
 // Accumulate ranks of all dangling nodes for distribution across 
-// the rest of the nodes in the graph.
+// the rest of the nodes in the graph by the Ranker.
 
 public class DanglerAccumulator extends PageRankTool
 {
@@ -54,6 +55,7 @@ public class DanglerAccumulator extends PageRankTool
             StringTokenizer st = new StringTokenizer(value.toString(), PageRank.DELIM+"");
             String pageName = st.nextToken(); 
             String pageRank = st.nextToken();
+            String oldPageRank = st.nextToken();
             if (!st.hasMoreTokens())
             {
                 context.write(DANGLER_KEY, new Text(pageRank));
@@ -68,13 +70,22 @@ public class DanglerAccumulator extends PageRankTool
                 throws IOException, InterruptedException
         {
             Double rank = 0.0;
-            Iterator<Text> i = values.iterator();
-            while (i.hasNext())
+            for(Text v : values)
             {
-                rank += Double.valueOf(i.next().toString());
+                rank += Double.valueOf(v.toString());
             }
             context.write(new Text(rank.toString()), NullWritable.get());
         }
+    }
+    
+    public static void main(String[] args) throws Exception {
+        System.exit (
+           ToolRunner.run (
+               new Configuration(), 
+               new DanglerAccumulator(), 
+               new String[] { "/Users/rshepherd/Documents/nyu/cloud/workspace/page-rank/src/main/resources/rank2/", 
+                              "/Users/rshepherd/Documents/nyu/cloud/workspace/page-rank/src/main/resources/dang/"})
+           );
     }
 
 }
