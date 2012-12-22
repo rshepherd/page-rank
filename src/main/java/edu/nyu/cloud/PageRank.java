@@ -11,7 +11,7 @@ public class PageRank extends PageRankTool
     public static final double DAMP_FACTOR = 0.85;
     public static final double INIT_RANK = 0.15;
     public static final int    CONVERGENCE_INTERVAL = 3;
-    public static final double CONVERGENCE_TOLERANCE = 0.00001;
+    public static final double CONVERGENCE_TOLERANCE = 0.001;
     public static final String OUTPUT_FILENAME = "/part-r-00000";
     
     @Override
@@ -19,7 +19,7 @@ public class PageRank extends PageRankTool
     {
         // Parse arguments
         String inputPath = args[0];
-        String outputPath = args[1];
+        outputPath = args[1];
         int iterations = Integer.parseInt(args[2]);
         
         // Define output paths
@@ -56,7 +56,7 @@ public class PageRank extends PageRankTool
                 runPhase(new ConvergenceDetector(), new String[] { currRankPath, convergePath });
                 double rankDifferential = getRankDifferential(convergePath);
                 System.out.println("Rank differential at iteration " + i + " is " + rankDifferential);
-                if (rankDifferential <= CONVERGENCE_TOLERANCE)
+                if (rankDifferential <= (CONVERGENCE_TOLERANCE * Double.valueOf(linkCount)))
                 {
                     System.out.println("Convergence reached at " + i + "th iteration.");
                     rm(convergePath);

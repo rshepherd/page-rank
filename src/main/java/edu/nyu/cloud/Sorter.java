@@ -64,7 +64,7 @@ public class Sorter extends PageRankTool
            ToolRunner.run (
                new Configuration(), 
                new Sorter(), 
-               new String[] { "/Users/rshepherd/Documents/nyu/cloud/workspace/page-rank/src/main/resources/rank2/", 
+               new String[] { "/Users/rshepherd/Documents/nyu/cloud/workspace/page-rank/src/main/resources/", 
                               "/Users/rshepherd/Documents/nyu/cloud/workspace/page-rank/src/main/resources/sort/"})
            );
     }

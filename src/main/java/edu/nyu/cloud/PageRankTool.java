@@ -1,7 +1,6 @@
 package edu.nyu.cloud;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.util.StringTokenizer;
@@ -23,6 +22,8 @@ public abstract class PageRankTool extends Configured implements Tool
 {
     protected final Log LOG = LogFactory.getLog(this.getClass());
 
+    protected String outputPath;
+    
     public abstract int run(String[] args) throws Exception;
     
     protected int runPhase(Tool tool, String[] args) throws Exception
@@ -34,14 +35,21 @@ public abstract class PageRankTool extends Configured implements Tool
         );
     }
     
-    protected boolean rm(String path) throws IOException 
+    protected FileSystem getFileSystem() throws Exception 
+    {
+        Configuration c = getConf();
+        FileSystem fs = FileSystem.get(c);
+        return fs;
+    }
+    
+    protected boolean rm(String path) throws Exception 
     {
         Path p = new Path(path);
         FileSystem fs = getFileSystem();
         return fs.delete(p, true);
     }
     
-    protected void mv(String from, String to) throws IOException {
+    protected void mv(String from, String to) throws Exception {
         Path src = new Path(from);
         Path dst = new Path(to);
         FileSystem fs = getFileSystem();
@@ -49,14 +57,7 @@ public abstract class PageRankTool extends Configured implements Tool
         fs.rename(src,  dst) ;
     }
 
-    protected FileSystem getFileSystem() throws IOException 
-    {
-        Configuration c = getConf();
-        FileSystem fs = FileSystem.get(c);
-        return fs;
-    }
-    
-    protected String getDanglersRankSum(String pathName) throws IOException
+    protected String getDanglersRankSum(String pathName) throws Exception
     {
         FileSystem fs = getFileSystem();
         String fileName = pathName + PageRank.OUTPUT_FILENAME;
@@ -64,7 +65,7 @@ public abstract class PageRankTool extends Configured implements Tool
         return danglerTotalRank != null ? danglerTotalRank : "0";
     }
     
-    protected Double getRankDifferential(String pathName) throws IOException
+    protected Double getRankDifferential(String pathName) throws Exception
     {
         FileSystem fs = getFileSystem();
         String fileName = pathName + PageRank.OUTPUT_FILENAME;
@@ -75,7 +76,7 @@ public abstract class PageRankTool extends Configured implements Tool
         return Double.valueOf(rankDifferential);
     }
 
-    protected String getLinkCount(String pathName) throws IOException, URISyntaxException
+    protected String getLinkCount(String pathName) throws Exception, URISyntaxException
     {
         FileSystem fs = getFileSystem();
         String fileName = pathName + PageRank.OUTPUT_FILENAME;
