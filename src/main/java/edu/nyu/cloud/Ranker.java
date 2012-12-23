@@ -108,19 +108,23 @@ public class Ranker extends PageRankTool
             for (Text value : values)
             {
                 String v = value.toString();
-                if (isNumeric(v))
+                try
                 {
-                    newRank += Double.valueOf(v);
-                } 
-                else if (v.startsWith("pr="))
+                    double d = Double.valueOf(v);
+                    newRank += d;
+                } catch (Exception e)
                 {
-                    v = v.replaceAll("pr=", "");
-                    oldRank.append(PageRank.DELIM).append(v);
-                } 
-                else
-                {
-                    outlinks.append(PageRank.DELIM).append(v);
+                    if (v.startsWith("pr="))
+                    {
+                        v = v.replaceAll("pr=", "");
+                        oldRank.append(PageRank.DELIM).append(v);
+                    } 
+                    else
+                    {
+                        outlinks.append(PageRank.DELIM).append(v);
+                    }
                 }
+                
             }
             
             // Special case for 1st iteration. Graph builder output
@@ -152,11 +156,6 @@ public class Ranker extends PageRankTool
             {
                 LOG.warn("Unable to parse dangler and link count params.");
             }
-        }
-        
-        private boolean isNumeric(String s)
-        {
-            return s.matches("((-|\\+)?[0-9]+(\\.[0-9]+)?)+");
         }
     }
     
