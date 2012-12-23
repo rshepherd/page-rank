@@ -24,7 +24,7 @@ public class Sorter extends PageRankTool
         Job job = new Job(getConf(), "Page Rank Sorting");
         
         // Config i/o
-        Path input = new Path(args[0] + PageRank.OUTPUT_FILENAME);  
+        Path input = new Path(args[0]);// + PageRank.OUTPUT_FILENAME);  
         FileInputFormat.addInputPath(job, input);
         Path output = new Path(args[1]); 
         FileOutputFormat.setOutputPath(job, output);

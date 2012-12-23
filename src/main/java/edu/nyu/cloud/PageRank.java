@@ -33,6 +33,7 @@ public class PageRank extends PageRankTool
         // Initialize the graph
         runPhase(new GraphBuilder(), new String[] { inputPath, prevRankPath } );
         runPhase(new Ranker(), new String[] { prevRankPath, currRankPath } );
+        System.out.println("Completed iteration 1");
         
         // Find out how many pages total there are
         runPhase(new Counter(), new String[] { currRankPath, counterPath } );
@@ -58,12 +59,12 @@ public class PageRank extends PageRankTool
                 rm(convergePath);
                 if (rankDifferential <= (CONVERGENCE_TOLERANCE * Double.valueOf(linkCount)))
                 {
-                    System.out.println("Convergence reached at iteration " + (i+1));
+                    System.out.println("Convergence reached at iteration " + i+1);
                     break;
                 } 
             }
             
-            System.out.println("Completed at iteration " + (i+1));
+            System.out.println("Completed iteration " + i);
         }
         
         // Finalize output
