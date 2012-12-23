@@ -58,12 +58,12 @@ public class PageRank extends PageRankTool
                 rm(convergePath);
                 if (rankDifferential <= (CONVERGENCE_TOLERANCE * Double.valueOf(linkCount)))
                 {
-                    System.out.println("Convergence reached at " + i+1 + "th iteration.");
+                    System.out.println("Convergence reached at iteration " + (i+1));
                     break;
                 } 
             }
             
-            System.out.println("Iteration " + i+1 + " completed.");
+            System.out.println("Completed at iteration " + (i+1));
         }
         
         // Finalize output
