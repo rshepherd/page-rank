@@ -34,6 +34,7 @@ public class Counter extends PageRankTool
         job.setJarByClass(Counter.class);
         job.setMapperClass(CounterMapper.class);
         job.setReducerClass(CounterReducer.class);
+        job.setNumReduceTasks(1);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
         

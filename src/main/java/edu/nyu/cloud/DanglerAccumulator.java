@@ -38,6 +38,7 @@ public class DanglerAccumulator extends PageRankTool
         job.setJarByClass(DanglerAccumulator.class);
         job.setMapperClass(DanglerMapper.class);
         job.setReducerClass(DanglerReducer.class);
+        job.setNumReduceTasks(1);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
         
