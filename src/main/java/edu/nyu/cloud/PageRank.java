@@ -55,15 +55,12 @@ public class PageRank extends PageRankTool
             {
                 runPhase(new ConvergenceDetector(), new String[] { currRankPath, convergePath });
                 double rankDifferential = getRankDifferential(convergePath);
-                System.out.println("Rank differential at iteration " + i + " is " + rankDifferential);
+                rm(convergePath);
                 if (rankDifferential <= (CONVERGENCE_TOLERANCE * Double.valueOf(linkCount)))
                 {
                     System.out.println("Convergence reached at " + i+1 + "th iteration.");
-                    rm(convergePath);
                     break;
-                } else {
-                    rm(convergePath);
-                }
+                } 
             }
             
             System.out.println("Iteration " + i+1 + " completed.");
