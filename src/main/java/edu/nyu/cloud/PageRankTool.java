@@ -2,6 +2,7 @@ package edu.nyu.cloud;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.StringTokenizer;
 
@@ -37,8 +38,9 @@ public abstract class PageRankTool extends Configured implements Tool
     
     protected FileSystem getFileSystem() throws Exception 
     {
+        URI uri = new URI(outputPath);
         Configuration c = getConf();
-        FileSystem fs = FileSystem.get(c);
+        FileSystem fs = FileSystem.get(uri, c);
         return fs;
     }
     

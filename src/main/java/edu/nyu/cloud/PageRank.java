@@ -17,6 +17,8 @@ public class PageRank extends PageRankTool
     @Override
     public int run(String[] args) throws Exception
     {
+        long start = System.currentTimeMillis();
+        
         // Parse arguments
         String inputPath = args[0];
         outputPath = args[1];
@@ -64,11 +66,14 @@ public class PageRank extends PageRankTool
                 } 
             }
             
-            System.out.println("Completed iteration " + i);
+            System.out.println("Completed iteration " + (i+1));
         }
         
         // Finalize output
         runPhase(new Sorter(), new String[] { currRankPath, resultsPath } );
+        
+        long end = System.currentTimeMillis();
+        System.out.println("Finished in " + (end - start) + "ms");
         
         // Clean-up
         rm(outputPath + "/rank");
