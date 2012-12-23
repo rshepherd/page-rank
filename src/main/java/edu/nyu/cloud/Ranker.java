@@ -87,7 +87,6 @@ public class Ranker extends PageRankTool
             Double rank = parentPageRank / numOutlinks;
             return new Text(rank.toString());
         }
-        
     }
 
     // Emit: key=url value=pagerank \t old-pagerank \t outlink1 \t outlink2 \t ...
@@ -124,7 +123,6 @@ public class Ranker extends PageRankTool
                         outlinks.append(PageRank.DELIM).append(v);
                     }
                 }
-                
             }
             
             // Special case for 1st iteration. Graph builder output
